@@ -152,8 +152,9 @@ public class SignAndTimeStamp implements SignatureInterface {
 
 			CMSSignedDataGenerator gen = new CMSSignedDataGenerator();			
 			
-			ContentSigner sha512Signer = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);				
-
+			ContentSigner sha512Signer = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);			
+			//ContentSigner sha512Signer = new JcaContentSignerBuilder("SHA256WithRSA").build();
+			
 			gen.addSignerInfoGenerator(
 					new JcaSignerInfoGeneratorBuilder(new JcaDigestCalculatorProviderBuilder().build())
 							.build(sha512Signer, new X509CertificateHolder(cert)));

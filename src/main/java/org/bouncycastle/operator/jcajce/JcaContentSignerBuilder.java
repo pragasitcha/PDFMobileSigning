@@ -132,6 +132,50 @@ public class JcaContentSignerBuilder
         }
     }
 
+    /*debug*/
+    /*remove private key*/
+    public ContentSigner build()
+            throws OperatorCreationException
+        {
+            try
+            {
+            	th.or.etda.mobile.util util = new th.or.etda.mobile.util();            	
+            	final Signature sig = util.init();
+                final AlgorithmIdentifier signatureAlgId = sigAlgId;                
+                
+                return new ContentSigner()
+                {
+                    private SignatureOutputStream stream = new SignatureOutputStream(sig);
+
+                    public AlgorithmIdentifier getAlgorithmIdentifier()
+                    {
+                        return signatureAlgId;
+                    }
+
+                    public OutputStream getOutputStream()
+                    {
+                        return stream;
+                    }
+
+                    public byte[] getSignature()
+                    {
+                        try
+                        {
+                            return stream.getSignature();
+                        }
+                        catch (SignatureException e)
+                        {
+                            throw new RuntimeOperatorException("exception obtaining signature: " + e.getMessage(), e);
+                        }
+                    }
+                };
+            }
+            catch (Exception e)
+            {
+                throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
+            }
+        }
+    
     private class SignatureOutputStream
         extends OutputStream
     {

@@ -17,7 +17,9 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.List;
@@ -80,10 +82,11 @@ public class util {
 		            cert = (X509Certificate) ks.getCertificate(alias);
 		            publicKey = cert.getPublicKey(); 
 	            }
-	        }			
+	        }
 				        
 	        Signature sig = Signature.getInstance("SHA256withRSA");
 	        sig.initSign(privateKey);
+	        
 	        sig.update(data);
 	        signature = sig.sign();
 	        System.out.println("from mobile :"+new String(signature)); 
@@ -111,6 +114,89 @@ public class util {
 		
 		return signature.verify(input);
 	
+	}
+	
+	public Signature init() {
+		
+		String filePath = "resources/";
+		String inputFileP12 ="certificate.p12";
+		String password = "Bass1234";
+		
+		KeyStore ks = null;
+		try {
+			ks = KeyStore.getInstance("PKCS12");
+		} catch (KeyStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 try {
+			ks.load(new FileInputStream(filePath + inputFileP12), password.toCharArray());
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CertificateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 
+		 Enumeration<String> aliases = null;
+		try {
+			aliases = ks.aliases();
+		} catch (KeyStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			while(aliases.hasMoreElements()) {
+	            String alias = (String)aliases.nextElement();	            
+	            Key key = null;
+				try {
+					key = ks.getKey(alias, password.toCharArray());
+				} catch (UnrecoverableKeyException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (KeyStoreException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+	            if(key instanceof PrivateKey) 
+	            {
+		            privateKey = (PrivateKey) key;	            
+		            try {
+						cert = (X509Certificate) ks.getCertificate(alias);
+					} catch (KeyStoreException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		            publicKey = cert.getPublicKey(); 
+	            }
+	        }
+			
+			Signature sig = null;
+			
+			try {
+				
+				sig = Signature.getInstance("SHA256withRSA");
+				sig.initSign(privateKey);
+				
+			} catch (InvalidKeyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		
+		return sig;		
 	}
 	
 	public String getHash(InputStream is) throws IOException, NoSuchAlgorithmException {
