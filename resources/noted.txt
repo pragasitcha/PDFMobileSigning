@@ -1,0 +1,5 @@
+mobilesigned_fromMobile1.pdf
+signed_data B64 > pdfbyte > return pdfbyte 
+
+mobilesigned_fromMobile1.pdf
+signed_data B64 > byte > CMS signed data > 
