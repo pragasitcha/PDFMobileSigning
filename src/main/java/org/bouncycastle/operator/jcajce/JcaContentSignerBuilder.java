@@ -94,6 +94,13 @@ public class JcaContentSignerBuilder
                         throw new RuntimeOperatorException("exception obtaining signature: " + e.getMessage(), e);
                     }
                 }
+
+                /* ETDA */
+				@Override
+				public byte[] getSignature(byte[] bytes) {
+					// TODO Auto-generated method stub
+					return null;
+				}
             };
         }
         catch (InvalidKeyException e)
@@ -106,18 +113,20 @@ public class JcaContentSignerBuilder
         }
     }
     
-    /*debug*/
+    /* ETDA
+     * ContentSigner with no Private Key
+     * 
+     * */
     public ContentSigner build()
             throws OperatorCreationException
         {
             try
-            {
-                final Signature sig = helper.createSignature(sigAlgId);
+            {                
                 final AlgorithmIdentifier signatureAlgId = sigAlgId;
                 
                 return new ContentSigner()
                 {
-                    private SignatureOutputStream stream = new SignatureOutputStream(sig);
+                    private SignatureOutputStream stream = null;
 
                     public AlgorithmIdentifier getAlgorithmIdentifier()
                     {
@@ -141,8 +150,13 @@ public class JcaContentSignerBuilder
                         }
                     }
                     
-                    /*debug
+                    /* ETDA
                      * call this function when we need signed data from remote signing
+                     * on this create also assign byte[] getSignature(byte[] bytes) at 
+                     * operator.ContentSigner
+                     * operator.BufferingContentSigner 
+                     * operator.bc.BcContentSignerBuilder
+                     * 
                      * */
                     @Override
                     public byte[] getSignature(byte[] bytes) {
@@ -160,10 +174,6 @@ public class JcaContentSignerBuilder
               			return signedData;
                     }
                 };
-            }
-            catch (InvalidKeyException e)
-            {
-                throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
             }
             catch (Exception e)
             {

@@ -150,13 +150,18 @@ public class SignAndTimeStamp implements SignatureInterface {
 			org.bouncycastle.asn1.x509.Certificate cert = org.bouncycastle.asn1.x509.Certificate
 					.getInstance(ASN1Primitive.fromByteArray(certificate.getEncoded()));
 
-			CMSSignedDataGenerator gen = new CMSSignedDataGenerator();			
+			CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
 			
-			ContentSigner sha512Signer = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);				
+			//ContentSigner for Privatekey Instance
+			//ContentSigner Pk = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);	
+			
+			//manual create ContentSignerBuilder
+			JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSA");			
+			ContentSigner noPk = contentSignerBuilder.build();			
 
 			gen.addSignerInfoGenerator(
 					new JcaSignerInfoGeneratorBuilder(new JcaDigestCalculatorProviderBuilder().build())
-							.build(sha512Signer, new X509CertificateHolder(cert)));
+							.build(noPk, new X509CertificateHolder(cert)));
 			gen.addCertificates(certStore);	
 			
 			CMSProcessableInputStream msg = new CMSProcessableInputStream(is);			

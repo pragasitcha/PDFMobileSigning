@@ -34,4 +34,12 @@ public interface ContentSigner
      * @return bytes representing the signature.
      */
     byte[] getSignature();
+
+    /**
+     * Returns a remote signature based on the current input data written 
+     * 
+     *
+     * @return bytes representing the signature.
+     */
+	byte[] getSignature(byte[] bytes);
 }

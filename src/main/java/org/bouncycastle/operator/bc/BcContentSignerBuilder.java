@@ -74,6 +74,13 @@ public abstract class BcContentSignerBuilder
                     throw new RuntimeOperatorException("exception obtaining signature: " + e.getMessage(), e);
                 }
             }
+
+            /* ETDA */
+			@Override
+			public byte[] getSignature(byte[] bytes) {
+				// TODO Auto-generated method stub
+				return null;
+			}
         };
     }
 

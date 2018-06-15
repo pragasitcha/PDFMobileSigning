@@ -67,4 +67,12 @@ public class BufferingContentSigner
     {
         return contentSigner.getSignature();
     }
+
+    /* ETDA */
+	@Override
+	public byte[] getSignature(byte[] bytes) {
+		// TODO Auto-generated method stub
+		
+		return contentSigner.getSignature(bytes);
+	}
 }

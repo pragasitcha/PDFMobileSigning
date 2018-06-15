@@ -187,6 +187,10 @@ public class SignerInfoGenerator
             AlgorithmIdentifier digestEncryptionAlgorithm = sigEncAlgFinder.findEncryptionAlgorithm(signer.getAlgorithmIdentifier());
 
             AlgorithmIdentifier digestAlg = null;
+            
+            /* ETDA */
+            Boolean hasPrivateKey = true;
+            byte[] sigBytes = null;
 
             if (sAttrGen != null)
             {
@@ -196,13 +200,22 @@ public class SignerInfoGenerator
                 AttributeTable signed = sAttrGen.getAttributes(Collections.unmodifiableMap(parameters));
 
                 signedAttr = getAttributeSet(signed);
+                     
+                // ETDA self add condition for signer contained Privatekey instance
 
-                // sig must be composed from the DER encoding.
-                OutputStream sOut = signer.getOutputStream();
-
-                sOut.write(signedAttr.getEncoded(ASN1Encoding.DER));
-
-                sOut.close();
+	            // sig must be composed from the DER encoding.
+	            OutputStream sOut = signer.getOutputStream();
+	            if(sOut != null) 
+	            {
+	                sOut.write(signedAttr.getEncoded(ASN1Encoding.DER));
+	                sOut.close();	                
+	                
+	            }
+	            else {
+	            	hasPrivateKey = false;
+	            }
+	            
+                
             }
             else
             {
@@ -217,11 +230,17 @@ public class SignerInfoGenerator
                     calculatedDigest = null;
                 }
             }
-
-            byte[] sigBytes = signer.getSignature();
-            /*debug*/
-            System.out.println("from signer:"+new String(sigBytes));
-
+            
+            // ETDA self add condition for signer contained Privatekey instance
+            if(hasPrivateKey) 
+            {
+            	sigBytes = signer.getSignature();
+            }
+            else 
+            {
+            	sigBytes = signer.getSignature(signedAttr.getEncoded(ASN1Encoding.DER));
+            }
+            
             ASN1Set unsignedAttr = null;
             if (unsAttrGen != null)
             {
