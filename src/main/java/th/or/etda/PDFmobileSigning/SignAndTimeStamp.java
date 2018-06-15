@@ -162,9 +162,8 @@ public class SignAndTimeStamp implements SignatureInterface {
 			CMSProcessableInputStream msg = new CMSProcessableInputStream(is);			
 			CMSSignedData signedData = gen.generate(msg,false);			
 			
-			if(tsaClient!= null)
-				signedData = signTimeStamps(signedData);
-				
+			/*if(tsaClient!= null)
+				signedData = signTimeStamps(signedData);*/				
 			
 			return signedData.getEncoded();
 			
@@ -172,36 +171,6 @@ public class SignAndTimeStamp implements SignatureInterface {
 			e.printStackTrace();
 			return null;
 		}
-		
-		/****successsigned*****/
-		
-		/*
-		List<Certificate> certList = new ArrayList<>();
-		certList.addAll(Arrays.asList(certificateChain));
-		@SuppressWarnings("rawtypes")
-		Store certStore = new JcaCertStore(certList);			
-		org.bouncycastle.asn1.x509.Certificate cert = org.bouncycastle.asn1.x509.Certificate
-				.getInstance(ASN1Primitive.fromByteArray(certificate.getEncoded()));
-
-		CMSSignedDataGenerator gen = new CMSSignedDataGenerator();			
-		
-		ContentSigner sha512Signer = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);				
-
-		gen.addSignerInfoGenerator(
-				new JcaSignerInfoGeneratorBuilder(new JcaDigestCalculatorProviderBuilder().build())
-						.build(sha512Signer, new X509CertificateHolder(cert)));
-		gen.addCertificates(certStore);	
-		
-		CMSProcessableInputStream msg = new CMSProcessableInputStream(is);
-		
-		CMSSignedData signedData = gen.generate(msg,false);			
-		
-		if(tsaClient!= null)
-			signedData = signTimeStamps(signedData);
-			
-		
-		return signedData.getEncoded();
-		*/
 	}
 
 	/**********************************************************************************************************/

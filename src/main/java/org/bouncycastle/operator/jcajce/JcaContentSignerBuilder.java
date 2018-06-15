@@ -2,27 +2,19 @@ package org.bouncycastle.operator.jcajce;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.MGF1ParameterSpec;
-import java.security.spec.PSSParameterSpec;
 
-import org.bouncycastle.asn1.ASN1Integer;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
-import org.bouncycastle.asn1.pkcs.RSASSAPSSparams;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.jcajce.util.DefaultJcaJceHelper;
 import org.bouncycastle.jcajce.util.NamedJcaJceHelper;
 import org.bouncycastle.jcajce.util.ProviderJcaJceHelper;
 import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.OperatorStreamException;
 import org.bouncycastle.operator.RuntimeOperatorException;
@@ -33,32 +25,11 @@ public class JcaContentSignerBuilder
     private SecureRandom random;
     private String signatureAlgorithm;
     private AlgorithmIdentifier sigAlgId;
-    private AlgorithmParameterSpec sigAlgSpec;
 
     public JcaContentSignerBuilder(String signatureAlgorithm)
     {
         this.signatureAlgorithm = signatureAlgorithm;
         this.sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find(signatureAlgorithm);
-        this.sigAlgSpec = null;
-    }
-
-    public JcaContentSignerBuilder(String signatureAlgorithm, AlgorithmParameterSpec sigParamSpec)
-    {
-        this.signatureAlgorithm = signatureAlgorithm;
-
-        if (sigParamSpec instanceof PSSParameterSpec)
-        {
-            PSSParameterSpec pssSpec = (PSSParameterSpec)sigParamSpec;
-
-            this.sigAlgSpec = pssSpec;
-            this.sigAlgId = new AlgorithmIdentifier(
-                                    PKCSObjectIdentifiers.id_RSASSA_PSS, createPSSParams(pssSpec));
-        }
-        else
-        {
-            throw new IllegalArgumentException("unknown sigParamSpec: "
-                            + ((sigParamSpec == null) ? "null" : sigParamSpec.getClass().getName()));
-        }
     }
 
     public JcaContentSignerBuilder setProvider(Provider provider)
@@ -88,11 +59,10 @@ public class JcaContentSignerBuilder
         try
         {
             final Signature sig = helper.createSignature(sigAlgId);
-            final AlgorithmIdentifier signatureAlgId = sigAlgId;
 
             if (random != null)
             {
-                sig.initSign(privateKey, random);
+                sig.initSign(privateKey);
             }
             else
             {
@@ -105,7 +75,7 @@ public class JcaContentSignerBuilder
 
                 public AlgorithmIdentifier getAlgorithmIdentifier()
                 {
-                    return signatureAlgId;
+                    return sigAlgId;
                 }
 
                 public OutputStream getOutputStream()
@@ -126,17 +96,86 @@ public class JcaContentSignerBuilder
                 }
             };
         }
-        catch (GeneralSecurityException e)
+        catch (InvalidKeyException e)
+        {
+            throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
+        }
+        catch (Exception e)
         {
             throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
         }
     }
+    
+    /*debug*/
+    public ContentSigner build()
+            throws OperatorCreationException
+        {
+            try
+            {
+                final Signature sig = helper.createSignature(sigAlgId);
+                final AlgorithmIdentifier signatureAlgId = sigAlgId;
+                
+                return new ContentSigner()
+                {
+                    private SignatureOutputStream stream = new SignatureOutputStream(sig);
+
+                    public AlgorithmIdentifier getAlgorithmIdentifier()
+                    {
+                        return sigAlgId;
+                    }
+
+                    public OutputStream getOutputStream()
+                    {
+                        return stream;
+                    }
+
+                    public byte[] getSignature()
+                    {
+                        try
+                        {
+                            return stream.getSignature();
+                        }
+                        catch (SignatureException e)
+                        {
+                            throw new RuntimeOperatorException("exception obtaining signature: " + e.getMessage(), e);
+                        }
+                    }
+                    
+                    /*debug
+                     * call this function when we need signed data from remote signing
+                     * */
+                    @Override
+                    public byte[] getSignature(byte[] bytes) {
+                    	
+                    	byte[] signedData = null;
+              			try {
+            				th.or.etda.mobile.util mobile = new th.or.etda.mobile.util();
+        					mobile.GsoftSignedData(null, bytes,"resources/", "certificate.p12", "Bass1234");
+        					signedData = mobile.getSignature();
+        				} catch (Exception e) {
+        					// TODO Auto-generated catch block
+        					e.printStackTrace();
+        				}
+              			
+              			return signedData;
+                    }
+                };
+            }
+            catch (InvalidKeyException e)
+            {
+                throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
+            }
+            catch (Exception e)
+            {
+                throw new OperatorCreationException("cannot create signer: " + e.getMessage(), e);
+            }
+        }
 
     private class SignatureOutputStream
         extends OutputStream
     {
         private Signature sig;
-        byte[] Signature = null;
+
         SignatureOutputStream(Signature sig)
         {
             this.sig = sig;
@@ -161,18 +200,6 @@ public class JcaContentSignerBuilder
             try
             {
                 sig.update(bytes);
-                
-                /*debug*/
-                
-    			try {
-    				th.or.etda.mobile.util mobile = new th.or.etda.mobile.util();
-					mobile.GsoftSignedData(null, bytes,"resources/", "certificate.p12", "Bass1234");
-					Signature = mobile.getSignature();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    			/*debug*/
             }
             catch (SignatureException e)
             {
@@ -196,22 +223,7 @@ public class JcaContentSignerBuilder
         byte[] getSignature()
             throws SignatureException
         {
-            //return sig.sign();
-        	/*debug*/
-        	return Signature;
+            return sig.sign();
         }
-    }
-
-    private static RSASSAPSSparams createPSSParams(PSSParameterSpec pssSpec)
-    {
-        DigestAlgorithmIdentifierFinder digFinder = new DefaultDigestAlgorithmIdentifierFinder();
-           AlgorithmIdentifier digId = digFinder.find(pssSpec.getDigestAlgorithm());
-           AlgorithmIdentifier mgfDig = digFinder.find(((MGF1ParameterSpec)pssSpec.getMGFParameters()).getDigestAlgorithm());
-
-        return new RSASSAPSSparams(
-            digId,
-            new AlgorithmIdentifier(PKCSObjectIdentifiers.id_mgf1, mgfDig),
-            new ASN1Integer(pssSpec.getSaltLength()),
-            new ASN1Integer(pssSpec.getTrailerField()));
     }
 }
